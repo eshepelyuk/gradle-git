@@ -80,6 +80,26 @@ class GitUtil {
         return new Branch(shortName, refName, commit)
     }
 
+    /**
+     * Build {@link Branch} object from git name
+     * @return the branch
+     * @since 0.3.0
+     */
+    static Branch gitNameToBranch(Repository repo, String gitName) {
+        Ref ref = repo.getRef(gitName)
+        if (ref) return refToBranch(repo, ref)
+
+        def commit
+        try {
+            RevCommit rev = new RevWalk(repo).parseCommit(repo.resolve(gitName))
+            commit = revCommitToCommit(rev)
+        } catch (MissingObjectException e) {
+            log.debug("Could not find commit for ref: $gitName", e)
+        }
+
+        return new Branch(name: null, refName: null, commit: commit)
+    }
+
     static TrackingStatus trackingStatusFromGit(BranchTrackingStatus status) {
         if (null != status) {
             return new TrackingStatus(remoteBranchRef: status.remoteTrackingBranch, aheadCount: status.aheadCount, behindCount: status.behindCount)
